@@ -1,0 +1,554 @@
+<!Doctype: HTML w/ Processing>
+
+<html>
+
+  <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>Processing Project: Conway's Game of Life</title>
+      <script type="text/javascript" src="js/processing.js"></script>
+  </head>
+  
+  <body>
+    <h1>Processing Project: Conway's Game of Life</h1>
+    <p>Conway's Game of Life is a life simulation. Each cell in the 100x100 grid follows a set of rules that dictates the state of its existence. These rules mimic population growth and decrease based on the surrounding ecosystem. The code goes through an array that maps the next generation of cells based on the current formation. Because of this, repeating patterns can occur.</p>    
+    
+    <script type="text/processing">
+    
+    Button b0, b1, b2, b3, b4;
+    public boolean start = true;
+    Grid grid = new Grid();
+    boolean intro = true;
+    boolean reset = true;
+    boolean check = false;
+    public boolean erase = false;
+    int op;
+
+
+    public void setup(){
+      background(0);
+      size(900,700);
+      textFont(loadFont("TimesNewRomanPS-ItalicMT-50.vlw"));
+      //text("instructions",30,30);
+
+      grid.setup();
+      b0 = new Button("clear", 0);
+      b1 = new Button("step", 1);
+      b2 = new Button("run/stop", 2);
+      b3 = new Button("instructions", 3);
+      b4 = new Button("erase/draw", 4);
+
+      stroke(90,30,69);
+      for(int i = 0; i < 101; i++){
+        for(int q = 0;  q < 101; q++){
+          line(q*7,0,q*7,700);
+        }
+        line(0,i*7,700,i*7);
+      }
+    }
+
+    public void draw(){
+      if(intro){
+        reset = true;
+        fill(0);
+        rect(0,0,width,height);
+        fill(255);
+        textSize(45);
+        textAlign(CENTER);
+        text("Conway's Game of Life", (width/2),60);
+        textSize(40);
+        text("instructions",(width/2),110);
+        textAlign(LEFT);
+        textSize(20);
+        text("click different squares on the grid to fill them in. this will be gen 0, your initial state.", 50, 150);
+        text("be sure to make sure you have a variety of clusters and individual squares, because the amount of ", 50, 180);
+        text("adjacent squares dictates the pattern.", 50, 210);
+        text("note: every cell interacts with its eight neighbours, which are the cells that are horizontally, ", 50, 240);
+        text("vertically, or diagonally adjacent.", 50, 270);
+        textAlign(CENTER);
+        text("here are the rules of evolution:", width/2, 300);
+        textAlign(LEFT);
+        text("1. any live cell with fewer than two live neighbours dies, as if by underpopulation.", 75, 330);
+        text("2. any live cell with two or three live neighbours lives on to the next generation.", 75, 360);
+        text("3. any live cell with more than three live neighbours dies, as if by overpopulation.", 75, 390);
+        text("4. any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.", 75, 420);
+
+        fill(255,op);
+        op++;
+        textAlign(CENTER);
+        text("press any key to continue", width/2, 660);
+        fill(255);
+        if(keyPressed){
+          intro = false;
+        }
+      }
+      else{
+        if(reset){
+          setup();
+          reset = false;
+        }
+
+        b0.draw();
+        b1.draw();
+        b2.draw();
+        b3.draw();
+        b4.draw();
+        b4.draw();
+        grid.draw();
+        if(check){
+          grid.check();
+        }
+      }
+
+    }
+
+    public void keyPressed(){
+      if(!intro){
+        if(key == 'e'){
+          b4.toggle2();
+          erase = b4.activated();
+        }
+        else if(key == 'd'){
+          b4.toggle3();
+          erase = b4.activated();
+        }
+        else if(key == ' '){
+          if(check){
+            check = false;
+            b2.toggle();
+            b4.toggle3();
+            erase = b4.activated();
+          }
+          else if(!check){
+            check = true;
+            b2.toggle();
+            b4.toggle3();
+            erase = b4.activated();
+          }
+        }
+        else if(key == 'i'){
+          intro = true;
+          b4.toggle3();
+          erase = b4.activated();
+        }
+        else if(key == 'c'){
+          check = false;
+          b4.toggle3();
+          erase = b4.activated();
+          grid.redraw();
+        }
+        else if(keyCode == RIGHT){
+          grid.check();
+          grid.draw();
+          b4.toggle3();
+          erase = b4.activated();
+        }
+      }
+    }
+
+    public void mouseClicked(){
+      if(!intro){
+        if(mouseX < (width-25) && mouseX > width-165 && mouseY < 230 && mouseY > 200){ //clear button
+          check = false;
+          b4.toggle3();
+          erase = b4.activated();
+          grid.redraw();
+
+        }
+        if(mouseX < (width-25) && mouseX > width-165 && mouseY < 270 && mouseY > 240){  // step button
+          grid.check();
+          grid.draw();
+          b4.toggle3();
+          erase = b4.activated();
+        }
+        if(mouseX < (width-25) && mouseX > width-165 && mouseY < 310 && mouseY > 280){ //run and stop button
+          if(check){
+            check = false;
+            b2.toggle();
+            b4.toggle3();
+            erase = b4.activated();
+          }
+          else if(!check){
+            check = true;
+            b2.toggle();
+            b4.toggle3();
+            erase = b4.activated();
+          }
+        }
+        if(mouseX < (width-25) && mouseX > width-165 && mouseY < 350 && mouseY > 320){  //instructions
+          intro = true;
+          b4.toggle3();
+          erase = b4.activated();
+        }
+        if(mouseX < (width-25) && mouseX > width-165 && mouseY < 390 && mouseY > 360){ // erase and draw
+          b4.toggle();
+          erase = b4.activated();
+        }
+      }
+    }
+
+      public class Box{
+      boolean alive;
+      boolean liv;
+      int adj;
+      int x,y;
+      int col;
+
+      public Box(int x, int y){
+        this.alive = false;
+        this.adj = 0;
+        this.x = x;
+        this.y = y;
+      }
+      public void draw(){
+        noStroke();
+        if(alive){
+          fill(255);
+        }
+        else{
+          fill(0);
+        }
+        rect(x,y,6,6);
+        if(mouseButton == LEFT && mouseX > x && mouseX < x+7 && mouseY > y && mouseY < y+7 && mousePressed && !erase){
+          alive = true;
+        }
+        else if(mouseButton == LEFT && mouseX > x && mouseX < x+7 && mouseY > y && mouseY < y+7 && mousePressed && erase){
+          alive = false;
+        }
+      }
+
+      public boolean isAlive(){
+        return alive;
+      }
+
+      public void makeAlive(){
+        liv = true;
+      }
+
+      public void kill(){
+        liv = false;
+      }
+
+      public void transfer(){
+        alive = liv;
+      }
+
+      public boolean isLiv(){
+        return liv;
+      }
+
+      public void makeFalse(){
+        alive = false;
+      }
+
+      public void eraser(){
+        erase = !erase;
+      }
+    } 
+
+    public class Button{
+
+      public String text;
+      int buttonNum;
+      int filler = 0;
+      int filler2 = 255;
+      boolean active = false;
+
+      public Button(String text, int num){
+        buttonNum = num;
+        this.text = text;
+      }
+
+      public void draw(){
+        strokeWeight(2);
+        fill(filler);
+        rect(width-175,200 + (buttonNum * 40),150,30);
+        fill(filler2);
+        textSize(17);
+        textAlign(CENTER);
+        text(text, width-100,222 + (buttonNum*40));
+      }
+
+      public void toggle(){
+        active = !active;
+        if(active){
+          filler = 255;
+          filler2 = 0;
+        } 
+        else{
+          filler = 0;
+          filler2 = 255;
+        }
+      }
+
+      public void toggle2(){
+        active = true;
+        if(active){
+          filler = 255;
+          filler2 = 0;
+        } 
+        else{
+          filler = 0;
+          filler2 = 255;
+        }
+      }
+
+      public void toggle3(){
+        active = false;
+        if(active){
+          filler = 255;
+          filler2 = 0;
+        } 
+        else{
+          filler = 0;
+          filler2 = 255;
+        }
+      }
+
+      public boolean activated(){
+        return active;
+      }
+    }
+
+    public class Grid{
+
+      float coler = 0;
+      float cell = 0;
+      Box[][] grid = new Box[100][100];
+
+
+      public void setup(){
+        for(int i = 0; i < 100; i++){
+          for(int j = 0; j < 100; j++){
+            Box b1 = new Box(i*7, j*7);
+
+            grid[i][j]  = b1;
+          }
+        }
+      }
+
+
+      public void draw(){
+        for(int i = 0; i < 100; i++){
+          for(int j = 0; j < 100; j++){
+            //grid[i][j].mouseClicked();
+            grid[i][j].draw();
+          }
+        }
+
+
+        /*stroke(90,30,69);
+        for(int i = 0; i < 101; i++){
+          for(int q = 0;  q < 101; q++){
+            line(q*7,0,q*7,700);
+          }
+          line(0,i*7,700,i*7);
+        }*/ 
+      }
+
+      public void kill(){
+        for(int i = 0; i < 100; i++){
+          for(int j = 0; j < 100; j++){
+            grid[i][j].kill();
+          }
+        }
+      }
+
+      public void redraw(){
+        for(int i = 0; i < 100; i++){
+          for(int j = 0; j < 100; j++){
+            grid[i][j].makeFalse();
+            grid[i][j].draw();
+          }
+        }
+      }
+
+      public void check(){
+        if(start){
+          kill();
+
+          for(int x=0;x<100;x++){
+
+            for(int y=0;y<100;y++){
+              cell = 0;
+              if(x==0 && y==0){    //top left
+                if(grid[x+1][y].isAlive()){ //right
+                  cell+=1;
+                }
+                if(grid[x][y+1].isAlive()){ //down
+                  cell+=1;
+                }
+                if(grid[x+1][y+1].isAlive()){ //bottom right
+                  cell+=1;
+                }
+              }
+              else if(x==99 && y==0){ //top right
+
+                if(grid[x][y+1].isAlive()){  //down
+                  cell+=1;
+                }
+                if(grid[x-1][y+1].isAlive()){  //bottom left
+                  cell+=1;
+                }
+                if(grid[x-1][y].isAlive()){  //left
+                  cell+=1;
+                }
+              }
+              else if(x==99 && y==99){ //bottom right
+
+                if(grid[x-1][y].isAlive()){  //left
+                  cell+=1;
+                }
+                if(grid[x-1][y-1].isAlive()){  //top left
+                  cell+=1;
+                }
+                if(grid[x][y-1].isAlive()){  //up
+                  cell+=1;
+                }
+
+              }
+              else if(x==0 && y==99){  //bottom left
+                if(grid[x+1][y].isAlive()){  //right
+                  cell+=1;
+                }
+                if(grid[x][y-1].isAlive()){  //up
+                  cell+=1;
+                }
+                if(grid[x+1][y-1].isAlive()){  //top right
+                  cell+=1;
+                }
+              }
+
+
+
+              else if(x>0 && y==0){   //top
+                if(grid[x+1][y].isAlive()){  //right
+                  cell+=1;
+                }
+                if(grid[x+1][y+1].isAlive()){  //bottom right
+                  cell+=1;
+                }
+                if(grid[x][y+1].isAlive()){  //down
+                  cell+=1;
+                }
+                if(grid[x-1][y+1].isAlive()){  //bottom left
+                  cell+=1;
+                }
+                if(grid[x-1][y].isAlive()){  //left
+                  cell+=1;
+                }
+              }
+              else if(x==0 && y>0){     //left
+                if(grid[x+1][y].isAlive()){  //right
+                  cell+=1;
+                }
+                if(grid[x+1][y+1].isAlive()){  //bottom right
+                  cell+=1;
+                }
+                if(grid[x][y+1].isAlive()){  //down
+                  cell+=1;
+                }
+                if(grid[x][y-1].isAlive()){  //up
+                  cell+=1;
+                }
+                if(grid[x+1][y-1].isAlive()){
+                  cell+=1;
+                }
+              }
+
+              else if(x==99 && y>0){     //right
+
+                if(grid[x][y+1].isAlive()){  //down
+                  cell+=1;
+                }
+                if(grid[x-1][y+1].isAlive()){  //bottom left
+                  cell+=1;
+                }
+                if(grid[x-1][y].isAlive()){  //left
+                  cell+=1;
+                }
+                if(grid[x-1][y-1].isAlive()){  //top left
+                  cell+=1;
+                }
+                if(grid[x][y-1].isAlive()){  //up
+                  cell+=1;
+                }
+              }
+
+              else if(x>0 && y==99){   //bottom
+                if(grid[x+1][y].isAlive()){  //right
+                  cell+=1;
+                }
+
+                if(grid[x-1][y].isAlive()){  //left
+                  cell+=1;
+                }
+                if(grid[x-1][y-1].isAlive()){  //top left
+                  cell+=1;
+                }
+                if(grid[x][y-1].isAlive()){  //up
+                  cell+=1;
+                }
+                if(grid[x+1][y-1].isAlive()){  //top right
+                  cell+=1;
+                }
+              }  
+
+
+              else{
+                if(grid[x+1][y].isAlive()){  //right
+                  cell+=1;
+                }
+                if(grid[x+1][y+1].isAlive()){  //bottom right
+                  cell+=1;
+                }
+                if(grid[x][y+1].isAlive()){  //down
+                  cell+=1;
+                }
+                if(grid[x-1][y+1].isAlive()){  //bottom left
+                  cell+=1;
+                }
+                if(grid[x-1][y].isAlive()){  //left
+                  cell+=1;
+                }
+                if(grid[x-1][y-1].isAlive()){  //top left
+                  cell+=1;
+                }
+                if(grid[x][y-1].isAlive()){  //up
+                  cell+=1;
+                }
+                if(grid[x+1][y-1].isAlive()){  //top right
+                  cell+=1;
+                }
+              }
+
+
+              if(cell==3){
+                grid[x][y].makeAlive();
+
+              }
+
+              else if(cell==2){
+                if(grid[x][y].isAlive()){
+                  grid[x][y].makeAlive();
+
+                }
+              }
+            }
+          }
+          redraw();
+          for(int x=0;x<100;x++){
+            for(int y=0;y<100;y++){
+              grid[x][y].transfer();
+              grid[x][y].draw();
+            }
+          }
+        }
+      }
+
+    }
+    </script>
+    <canvas id="sketch" style="border: 1px solid black;"></canvas>
+    
+  </body>
+  
+</html>
